@@ -12,8 +12,10 @@ import os
 from django.conf import settings
 from django.shortcuts import render
 from .models import Resume
+from PyPDF2 import PdfReader
 from docx import Document
-import fitz  # PyMuPDF
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 
 
 
@@ -94,11 +96,9 @@ def get_key_points(request,resume_id):
 # Function to extract text from PDF using PyMuPDF
 def extract_text_from_pdf(path):
     try:
-        text = ""
-        with fitz.open(path) as doc:
-            for page in doc:
-                text += page.get_text()
-        return text
+        with open(path, 'rb') as f:
+            reader = PdfReader(f)
+            return "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
     except Exception as e:
         return f"[Error extracting PDF text: {str(e)}]"
 
@@ -111,30 +111,36 @@ def extract_text_from_docx(path):
 
 def upload_resume(request):
     if request.method == 'POST':
-        uploaded_file = request.FILES['resume_file']
-        resume = Resume(file_path=uploaded_file)
-        resume.save()
+        uploaded_file = request.FILES.get('resume_file')
+        original_filename = uploaded_file.name
+        file_storage_path = os.path.join('resumes', original_filename)
+        full_path = os.path.join(settings.MEDIA_ROOT, file_storage_path)
 
-        full_path = os.path.join(settings.MEDIA_ROOT, resume.file_path.name)
+        # Check if file already exists
+        if Resume.objects.filter(file_path=file_storage_path).exists():
+            return render(request, 'upload.html', {
+                'error': 'This resume is already uploaded.'
+            })
 
-        # Extract text based on file type
+        # Save file manually
+        default_storage.save(file_storage_path, ContentFile(uploaded_file.read()))
+
+        # Extract text
         text = ""
-        if uploaded_file.name.endswith('.pdf'):
+        if original_filename.endswith('.pdf'):
             text = extract_text_from_pdf(full_path)
-
-        elif uploaded_file.name.endswith('.docx'):
+        elif original_filename.endswith('.docx'):
             text = extract_text_from_docx(full_path)
-
-        elif uploaded_file.name.endswith('.doc'):
-            text = "[.doc files are not supported without textract. Please upload .docx or .pdf instead.]"
-
         else:
-            text = "[Unsupported file format. Please upload a PDF or DOCX file.]"
+            text = "[Unsupported file format. Only .pdf and .docx are allowed.]"
 
-        # Save extracted text
-        resume.resume_text = text
+        # Save to DB
+        resume = Resume(file_path=file_storage_path, resume_text=text)
         resume.save()
 
-        return render(request, 'upload.html', {'success': True})
+        return render(request, 'upload.html', {
+            'success': True,
+            'filename': original_filename
+        })
 
     return render(request, 'upload.html')

@@ -1,8 +1,13 @@
 from django.db import models
+import os
+
+def resume_upload_path(instance, filename):
+    # Store using original name inside "resumes/" folder
+    return f"resumes/{filename}"
 
 class Resume(models.Model):
-    file_path = models.FileField(upload_to='resumes/')  # stores path under MEDIA_ROOT/resumes/
-    resume_text = models.TextField(blank=True)  # blank until text is extracted
+    file_path = models.FileField(upload_to=resume_upload_path, unique=True)
+    resume_text = models.TextField(blank=True)
 
     def __str__(self):
-        return str(self.file_path)
+        return os.path.basename(self.file_path.name)
