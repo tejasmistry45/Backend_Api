@@ -1,0 +1,9 @@
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="resume_file" required>
+    <button type="submit">Upload</button>
+</form>
+
+{% if success %}
+<p>Resume uploaded and processed successfully!</p>
+{% endif %}
