@@ -1,13 +1,9 @@
 from django.urls import path
-from .views import find_matches,get_key_points, upload_resume
-from django.conf import settings
-from django.conf.urls.static import static
+from .views import UploadResumeAPIView, FindMatchesAPIView, ResumeKeyPointsAPIView
 
 urlpatterns = [
-    path('upload/', upload_resume, name='upload_resume'),
-    path('findmatches/', find_matches),
-    path('getkeypoints/<int:resume_id>/',get_key_points)
-    
+    path('api/upload-resume/', UploadResumeAPIView.as_view(), name='upload-resume'),
+    path('api/find-matches/', FindMatchesAPIView.as_view(), name='find-matches'),
+    path('api/resume/<int:resume_id>/key-points/', ResumeKeyPointsAPIView.as_view(), name='resume-key-points'),
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
