@@ -139,5 +139,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 import os
 
+# Media files (resumes)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Where we store CSV and index files
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+EMBED_DIR = os.path.join(BASE_DIR, 'embeddings')

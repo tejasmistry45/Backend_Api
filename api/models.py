@@ -1,5 +1,5 @@
-from django.db import models
 import os
+from django.db import models
 
 def resume_upload_path(instance, filename):
     # Store using original name inside "resumes/" folder
