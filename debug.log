@@ -1,0 +1,69 @@
+Watching for file changes with StatReloader
+Environment variable FAISS_OPT_LEVEL is not set, so let's pick the instruction set according to the current CPU
+Loading faiss with AVX2 support.
+Successfully loaded faiss with AVX2 support.
+Failed to load GPU Faiss: name 'GpuIndexIVFFlat' is not defined. Will not load constructor refs for GPU indexes. This is only an error if you're trying to use GPU Faiss.
+Use pytorch device_name: cpu
+Load pretrained SentenceTransformer: all-mpnet-base-v2
+Starting new HTTPS connection (1): huggingface.co:443
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/modules.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/config_sentence_transformers.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/README.md HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/modules.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/sentence_bert_config.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/adapter_config.json HTTP/1.1" 404 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/config.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+https://huggingface.co:443 "GET /api/models/sentence-transformers/all-mpnet-base-v2/revision/main HTTP/1.1" 200 6787
+https://huggingface.co:443 "GET /api/models/sentence-transformers/all-mpnet-base-v2 HTTP/1.1" 200 6787
+(0.000) SELECT CAST(SERVERPROPERTY('ProductVersion') AS varchar); args=None; alias=default
+(0.000) SELECT SYSDATETIME(); args=None; alias=default
+(0.091) SELECT
+                        TABLE_NAME,
+                        TABLE_TYPE,
+                        CAST(ep.value AS VARCHAR) AS COMMENT
+                    FROM INFORMATION_SCHEMA.TABLES i
+                    LEFT JOIN sys.tables t ON t.name = i.TABLE_NAME
+                    LEFT JOIN sys.extended_properties ep ON t.object_id = ep.major_id
+                    AND ((ep.name = 'MS_DESCRIPTION' AND ep.minor_id = 0) OR ep.value IS NULL)
+                    WHERE i.TABLE_SCHEMA = SCHEMA_NAME(); args=None; alias=default
+(0.003) SELECT [django_migrations].[id], [django_migrations].[app], [django_migrations].[name], [django_migrations].[applied] FROM [django_migrations]; args=(); alias=default
+Processed UUID: 2a836997-15aa-4fe2-0763-08dca63d0e23
+(0.000) SELECT SYSDATETIME(); args=None; alias=default
+(0.003) SELECT TOP 21 [JobInquiry].[id], [JobInquiry].[full_name], [JobInquiry].[email], [JobInquiry].[position_of_interest], [JobInquiry].[phone_number], [JobInquiry].[location], [JobInquiry].[message], [JobInquiry].[remarks], [JobInquiry].[date], [JobInquiry].[is_active], [JobInquiry].[cv_file], [JobInquiry].[job_inquiry_status], [JobInquiry].[resume_text] FROM [JobInquiry] WHERE [JobInquiry].[id] = 2a83699715aa4fe2076308dca63d0e23; args=('2a83699715aa4fe2076308dca63d0e23',); alias=default
+Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'full_name'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'position_of_interest'. (207); [42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'phone_number'. (207); [42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'is_active'. (207); [42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'cv_file'. (207); [42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'job_inquiry_status'. (207); [42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Internal Server Error: /api/process-path/
+E:\Machine Learning\backend\api\views.py changed, reloading.
+Watching for file changes with StatReloader
+Environment variable FAISS_OPT_LEVEL is not set, so let's pick the instruction set according to the current CPU
+Loading faiss with AVX2 support.
+Successfully loaded faiss with AVX2 support.
+Failed to load GPU Faiss: name 'GpuIndexIVFFlat' is not defined. Will not load constructor refs for GPU indexes. This is only an error if you're trying to use GPU Faiss.
+Use pytorch device_name: cpu
+Load pretrained SentenceTransformer: all-mpnet-base-v2
+Starting new HTTPS connection (1): huggingface.co:443
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/modules.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/config_sentence_transformers.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/README.md HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/modules.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/sentence_bert_config.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/adapter_config.json HTTP/1.1" 404 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/config.json HTTP/1.1" 200 0
+https://huggingface.co:443 "HEAD /sentence-transformers/all-mpnet-base-v2/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+https://huggingface.co:443 "GET /api/models/sentence-transformers/all-mpnet-base-v2/revision/main HTTP/1.1" 200 6787
+https://huggingface.co:443 "GET /api/models/sentence-transformers/all-mpnet-base-v2 HTTP/1.1" 200 6787
+(0.001) SELECT CAST(SERVERPROPERTY('ProductVersion') AS varchar); args=None; alias=default
+(0.001) SELECT SYSDATETIME(); args=None; alias=default
+(0.150) SELECT
+                        TABLE_NAME,
+                        TABLE_TYPE,
+                        CAST(ep.value AS VARCHAR) AS COMMENT
+                    FROM INFORMATION_SCHEMA.TABLES i
+                    LEFT JOIN sys.tables t ON t.name = i.TABLE_NAME
+                    LEFT JOIN sys.extended_properties ep ON t.object_id = ep.major_id
+                    AND ((ep.name = 'MS_DESCRIPTION' AND ep.minor_id = 0) OR ep.value IS NULL)
+                    WHERE i.TABLE_SCHEMA = SCHEMA_NAME(); args=None; alias=default
+(0.008) SELECT [django_migrations].[id], [django_migrations].[app], [django_migrations].[name], [django_migrations].[applied] FROM [django_migrations]; args=(); alias=default
+(0.000) SELECT SYSDATETIME(); args=None; alias=default
+(0.007) SELECT TOP 21 [JobInquiry].[id], [JobInquiry].[full_name], [JobInquiry].[email], [JobInquiry].[position_of_interest], [JobInquiry].[phone_number], [JobInquiry].[location], [JobInquiry].[message], [JobInquiry].[remarks], [JobInquiry].[date], [JobInquiry].[is_active], [JobInquiry].[cv_file], [JobInquiry].[job_inquiry_status], [JobInquiry].[resume_text] FROM [JobInquiry] WHERE [JobInquiry].[id] = 2a83699715aa4fe2076308dca63d0e23; args=('2a83699715aa4fe2076308dca63d0e23',); alias=default
+Internal Server Error: /api/process-path/

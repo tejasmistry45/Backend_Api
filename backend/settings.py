@@ -89,6 +89,16 @@ DATABASES = {
             'driver': 'ODBC Driver 17 for SQL Server',
             'trusted_connection': 'yes',
         },
+    },
+    'external_db': {
+        'ENGINE': 'mssql',
+        'NAME': 'SkyHR',
+        'HOST': 'localhost',
+        'PORT': '',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'extra_params': 'TrustServerCertificate=yes',
+        },
     }
 }
 

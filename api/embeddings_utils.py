@@ -28,15 +28,15 @@ else:
     EMBEDS = np.zeros((0, MODEL.get_sentence_embedding_dimension()), dtype='float32')
 
 
-def add_resume_to_index(resume_obj):
+def add_resume_to_index(resume_text,resume_id):
     print("Embedding new resume...")
-
-    embedding = MODEL.encode([resume_obj.resume_text])[0].astype('float32')
-
+ 
+    embedding = MODEL.encode([resume_text])[0].astype('float32')
+ 
     # Add to global INDEX
     INDEX.add(np.array([embedding]))
     faiss.write_index(INDEX, INDEX_FILE)
-
+ 
     # Save/update embedding array
     if os.path.exists(EMBED_FILE):
         embeddings = np.load(EMBED_FILE)
@@ -44,13 +44,13 @@ def add_resume_to_index(resume_obj):
     else:
         embeddings = np.array([embedding])
     np.save(EMBED_FILE, embeddings)
-
+ 
     # Save/update resume IDs
     if os.path.exists(ID_PATH):
         ids = list(np.load(ID_PATH, allow_pickle=True))
     else:
         ids = []
-    ids.append(resume_obj.id)
+    ids.append(resume_id)
     np.save(ID_PATH, np.array(ids))
-
-    print(f"Resume ID {resume_obj.id} added. Index size: {INDEX.ntotal}")
+ 
+    print(f"Resume ID {resume_id} added. Index size: {INDEX.ntotal}")
