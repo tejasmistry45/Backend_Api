@@ -39,37 +39,83 @@ class ProcessResumePathAPIView(APIView):
         return Response({'message': 'Processed successfully', 'resume_id': resume.id}, status=status.HTTP_201_CREATED)
 
 
+import os
+import numpy as np
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Resume
+from .embeddings_utils import MODEL, INDEX, ID_PATH
+
 class FindMatchesAPIView(APIView):
     def post(self, request):
-        job_desc = request.data.get('job_description', '')
+        data = request.data
+
+        # 1️⃣ Try existing format
+        job_desc = data.get('job_description', '').strip()
+
+        # 2️⃣ If not present, try structured format
         if not job_desc:
-            return Response({'error': 'No job_description.'}, status=status.HTTP_400_BAD_REQUEST)
+            job_title = data.get('job_title', '').strip()
+            location = data.get('location', '').strip()
+            years_exp = data.get('years_exp', '').strip()
+            skills = data.get('Skills', '').strip()
+            qualifications = data.get('Qualifications', '').strip()
 
+            # Ensure required structured fields exist
+            if all([job_title, location, years_exp]):
+                job_desc = (
+                    f"Job Title: {job_title}; "
+                    f"Location: {location}; "
+                    f"Years Exp: {years_exp}; "
+                    f"Skills: {skills}; "
+                    f"Qualifications: {qualifications}"
+                )
+            else:
+                return Response(
+                    {'error': 'Either provide "job_description" or all of "job_title", "location", and "years_exp".'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # 3️⃣ Make sure we have something to search on
+        if not job_desc:
+            return Response({'error': 'No job description provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4️⃣ Check that index is populated
         if INDEX.ntotal == 0:
-            return Response({'error': 'FAISS index is empty. Please upload resumes first.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'error': 'FAISS index is empty. Please upload resumes first.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
+        # 5️⃣ Encode & search
         q_vec = MODEL.encode([job_desc]).astype('float32')
         D, I = INDEX.search(q_vec, k=5)
 
+        # 6️⃣ Load the resume‐ID mapping
         try:
             id_list = np.load(ID_PATH, allow_pickle=True).tolist()
         except FileNotFoundError:
-            return Response({'error': 'resume_ids.npy file not found.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': f'ID mapping file not found at {ID_PATH}.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
+        # 7️⃣ Build results
         results = []
         for score, idx in zip(D[0], I[0]):
             idx = int(idx)
-            if idx == -1 or idx >= len(id_list):
+            if idx < 0 or idx >= len(id_list):
                 continue
-
-            db_id = int(id_list[idx])
+            db_id = id_list[idx]
             try:
-                obj = Resume.objects.get(id=db_id)
-                results.append({'resume_id': obj.id, 'score': float(score)})
+                resume = Resume.objects.get(id=db_id)
+                results.append({'resume_id': resume.id, 'score': float(score)})
             except Resume.DoesNotExist:
                 continue
 
         return Response({'matches': results})
+
 
 
 class ResumeKeyPointsAPIView(APIView):
