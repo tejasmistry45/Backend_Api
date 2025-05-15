@@ -4,6 +4,9 @@ import faiss
 from django.conf import settings
 from sentence_transformers import SentenceTransformer
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Ensure the embedding directory exists
 os.makedirs(settings.EMBED_DIR, exist_ok=True)
 
@@ -28,29 +31,36 @@ else:
     EMBEDS = np.zeros((0, MODEL.get_sentence_embedding_dimension()), dtype='float32')
 
 
-def add_resume_to_index(resume_text,resume_id):
-    print("Embedding new resume...")
- 
+def add_resume_to_index(resume_text, resume_id):
+    logger.info("Embedding new resume...")
+
     embedding = MODEL.encode([resume_text])[0].astype('float32')
- 
+
     # Add to global INDEX
     INDEX.add(np.array([embedding]))
     faiss.write_index(INDEX, INDEX_FILE)
- 
+    logger.info("Embedding added to FAISS index and written to file.")
+
     # Save/update embedding array
     if os.path.exists(EMBED_FILE):
         embeddings = np.load(EMBED_FILE)
         embeddings = np.vstack([embeddings, embedding])
+        logger.info("Existing embedding file loaded and updated.")
     else:
         embeddings = np.array([embedding])
+        logger.info("New embedding array created.")
     np.save(EMBED_FILE, embeddings)
- 
+    logger.info("Embedding array saved.")
+
     # Save/update resume IDs
     if os.path.exists(ID_PATH):
         ids = list(np.load(ID_PATH, allow_pickle=True))
+        logger.info("Existing ID list loaded.")
     else:
         ids = []
+        logger.info("New ID list created.")
     ids.append(resume_id)
     np.save(ID_PATH, np.array(ids))
- 
-    print(f"Resume ID {resume_id} added. Index size: {INDEX.ntotal}")
+    logger.info("Resume ID list updated and saved.")
+
+    logger.info(f"Resume ID {resume_id} added. Index size: {INDEX.ntotal}")
