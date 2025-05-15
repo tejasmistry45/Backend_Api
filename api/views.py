@@ -2,15 +2,12 @@ import json
 import os
 from django.conf import settings
 from django.db import connections
-from django.http import FileResponse
-import faiss
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-
 from api.llm_utils import extract_resume_info
 from .utils import extract_text_from_pdf, extract_text_from_docx
-from .embeddings_utils import EMBED_FILE, ID_PATH, add_resume_to_index, MODEL, INDEX, EMBEDS
+from .embeddings_utils import ID_PATH, add_resume_to_index, MODEL, INDEX
 import numpy as np
 import pyodbc
 
@@ -19,6 +16,7 @@ class ProcessResumePathAPIView(APIView):
     def post(self, request):
         rel_path = request.data.get('path')
         resume_id=request.data.get('resumeid')
+
         if not rel_path:
             return Response({'error': 'No path provided.'}, status=status.HTTP_400_BAD_REQUEST)
  
@@ -86,7 +84,7 @@ class FindMatchesAPIView(APIView):
 
         # 4️⃣ Encode query and search
         q_vec = MODEL.encode([job_desc]).astype('float32')
-        D, I = INDEX.search(q_vec, k=5)  # top 5 matches
+        D, I = INDEX.search(q_vec, k=5) 
 
         # 5️⃣ Load resume ID mapping
         try:
@@ -121,7 +119,7 @@ class FindMatchesAPIView(APIView):
 class ResumeKeyPointsAPIView(APIView):
     def get(self, request, resume_id):
         try:
-            # Connect to the Resume database
+            # Connect to the SkyHR database
             conn = pyodbc.connect(
                 'DRIVER={ODBC Driver 17 for SQL Server};'
                 'SERVER=localhost;'
