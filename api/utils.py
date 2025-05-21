@@ -4,6 +4,7 @@ import fitz
 import subprocess
 from docx2pdf import convert as docx_to_pdf
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -44,3 +45,26 @@ def run_llamaocr_on_image(image_path):
         return result.stdout.strip()
     except Exception as e:
         raise Exception(f"Failed to run OCR: {e}")
+
+def clean_ocr_text(text):
+    # Remove markdown headings like ###, ##, #
+    text = re.sub(r'^#+\s*', '', text, flags=re.MULTILINE)
+
+    # Remove markdown bold/italic like **bold**, *italic*, etc.
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)  # Bold
+    text = re.sub(r'\*([^*]+)\*', r'\1', text)      # Italic
+    text = re.sub(r'__([^_]+)__', r'\1', text)      # Bold with underscores
+
+    # Remove horizontal rules like --- or ***
+    text = re.sub(r'^[-*]{3,}$', '', text, flags=re.MULTILINE)
+
+    # Remove backticks used for code
+    text = re.sub(r'`+', '', text)
+
+    # Collapse multiple newlines into a single newline
+    text = re.sub(r'\n{2,}', '\n', text)
+
+    # Strip leading/trailing whitespace
+    text = text.strip()
+
+    return text

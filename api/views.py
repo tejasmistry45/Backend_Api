@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api.llm_utils import extract_resume_info
-from .utils import convert_docx_to_pdf, convert_pdf_to_images, run_llamaocr_on_image
+from .utils import clean_ocr_text, convert_docx_to_pdf, convert_pdf_to_images, run_llamaocr_on_image
 from .embeddings_utils import ID_PATH, add_resume_to_index, MODEL, INDEX
 import numpy as np
 import pyodbc
@@ -49,7 +49,9 @@ class ProcessResumePathAPIView(APIView):
                 text = run_llamaocr_on_image(image_path)
                 ocr_texts.append(text)
 
-            full_text = "\n\n".join(ocr_texts)
+            raw_text = "\n\n".join(ocr_texts)
+            full_text = clean_ocr_text(raw_text)
+
 
             # Save to DB
             with connections['external_db'].cursor() as cursor:
