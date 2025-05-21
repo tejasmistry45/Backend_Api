@@ -1,12 +1,14 @@
 import json
 import os
+import subprocess
+import traceback
 from django.conf import settings
 from django.db import connections
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api.llm_utils import extract_resume_info
-from .utils import extract_text_from_pdf, extract_text_from_docx
+from .utils import convert_docx_to_pdf, convert_pdf_to_images, run_llamaocr_on_image
 from .embeddings_utils import ID_PATH, add_resume_to_index, MODEL, INDEX
 import numpy as np
 import pyodbc
@@ -17,49 +19,53 @@ logger = logging.getLogger(__name__)
 
 class ProcessResumePathAPIView(APIView):
     def post(self, request):
-        logger.info("Received request to process resume.")
-        rel_path = request.data.get('path')
         resume_id = request.data.get('resumeid')
+        rel_path = request.data.get('path')
 
         if not rel_path:
-            logger.warning("No path provided in request.")
             return Response({'error': 'No path provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
         full_path = os.path.join(settings.MEDIA_ROOT, rel_path)
         if not os.path.exists(full_path):
-            logger.warning(f"File not found at path: {full_path}")
             return Response({'error': 'File not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            if rel_path.lower().endswith('.pdf'):
-                logger.info(f"Extracting text from PDF: {full_path}")
-                resume_text = extract_text_from_pdf(full_path)
-            elif rel_path.lower().endswith('.docx'):
-                logger.info(f"Extracting text from DOCX: {full_path}")
-                resume_text = extract_text_from_docx(full_path)
-            else:
-                logger.warning(f"Unsupported file format: {rel_path}")
-                return Response({'error': 'Unsupported format.'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error(f"Error extracting text: {str(e)}")
-            return Response({'error': 'Error processing resume text.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Convert DOCX to PDF if needed
+            if full_path.lower().endswith('.docx'):
+                logger.info("Converting DOCX to PDF")
+                full_path = convert_docx_to_pdf(full_path)
 
-        try:
+            if not full_path.lower().endswith('.pdf'):
+                return Response({'error': 'Only PDF or DOCX files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Convert PDF to images
+            logger.info("Converting PDF pages to images")
+            image_paths = convert_pdf_to_images(full_path)
+
+            # Run OCR on each image and gather text
+            ocr_texts = []
+            for image_path in image_paths:
+                logger.info(f"Running OCR on image: {image_path}")
+                text = run_llamaocr_on_image(image_path)
+                ocr_texts.append(text)
+
+            full_text = "\n\n".join(ocr_texts)
+
+            # Save to DB
             with connections['external_db'].cursor() as cursor:
-                logger.info(f"Updating resume_text for resume_id: {resume_id}")
                 cursor.execute(
                     "UPDATE JobInquiry SET resume_text = %s WHERE Id = %s",
-                    [resume_text, resume_id]
+                    [full_text, resume_id]
                 )
+
+            # Add to FAISS index (assumed implemented)
+            add_resume_to_index(full_text, resume_id)
+
+            return Response({'message': 'Processed successfully', 'resume_id': resume_id}, status=status.HTTP_201_CREATED)
+
         except Exception as e:
-            logger.error(f"Database update failed: {str(e)}")
-            return Response({'error': 'Database update failed.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        logger.info(f"Adding resume to FAISS index for ID: {resume_id}")
-        add_resume_to_index(resume_text, resume_id)
-
-        logger.info(f"Resume processed successfully for ID: {resume_id}")
-        return Response({'message': 'Processed successfully', 'resume_id': resume_id}, status=status.HTTP_201_CREATED)
+            logger.error(f"Processing failed: {e}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class FindMatchesAPIView(APIView):
@@ -173,4 +179,4 @@ class ResumeKeyPointsAPIView(APIView):
 
 
 
-#  
+# 

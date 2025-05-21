@@ -1,0 +1,21 @@
+{
+  "name": "llamaocr-service",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "llama-ocr": "^0.0.6",
+    "mammoth": "^1.9.0",
+    "multer": "^2.0.0",
+    "pdf-parse": "^1.1.1"
+  }
+}
