@@ -49,9 +49,16 @@ class ProcessResumePathAPIView(APIView):
                 text = run_llamaocr_on_image(image_path)
                 ocr_texts.append(text)
 
+            # Clean up the image files after OCR
+            for image_path in image_paths:
+                try:
+                    os.remove(image_path)
+                    logger.info(f"Deleted temporary image: {image_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to delete image {image_path}: {e}")
+
             raw_text = "\n\n".join(ocr_texts)
             full_text = clean_ocr_text(raw_text)
-
 
             # Save to DB
             with connections['external_db'].cursor() as cursor:
