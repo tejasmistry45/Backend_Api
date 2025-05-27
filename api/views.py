@@ -82,34 +82,32 @@ class FindMatchesAPIView(APIView):
         logger.info("Received request to find resume matches.")
         data = request.data
 
-        job_desc = data.get('job_description', '').strip()
-        if not job_desc:
-            job_title = data.get('job_title', '').strip()
-            location = data.get('location', '').strip()
-            years_exp = data.get('years_exp', '').strip()
-            skills = data.get('Skills', '').strip()
-            qualifications = data.get('Qualifications', '').strip()
+        # Extract structured fields
+        job_title = data.get('job_title', '').strip()
+        location = data.get('location', '').strip()
+        years_exp = data.get('years_exp', '').strip()
+        skills = data.get('Skills', '').strip()
+        qualifications = data.get('Qualifications', '').strip()
 
-            if all([job_title, location, years_exp]):
-                job_desc = (
-                    f"Job Title: {job_title}; "
-                    f"Location: {location}; "
-                    f"Years Exp: {years_exp}; "
-                    f"Skills: {skills}; "
-                    f"Qualifications: {qualifications}"
-                )
-                logger.info("Constructed job description from structured fields.")
-            else:
-                logger.warning("Insufficient structured data provided.")
-                return Response(
-                    {'error': 'Either provide "job_description" or all of "job_title", "location", and "years_exp".'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        # Validate required fields
+        if not all([job_title, location, years_exp]):
+            logger.warning("Insufficient structured data provided.")
+            return Response(
+                {'error': 'Please provide all of "job_title", "location", and "years_exp".'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        if not job_desc:
-            logger.warning("No job description provided.")
-            return Response({'error': 'No job description provided.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Construct job description from structured fields
+        job_desc = (
+            f"Job Title: {job_title}; "
+            f"Location: {location}; "
+            f"Years Exp: {years_exp}; "
+            f"Skills: {skills}; "
+            f"Qualifications: {qualifications}"
+        )
+        logger.info("Constructed job description from structured fields.")
 
+        # Check if FAISS index is available
         if INDEX.ntotal == 0:
             logger.warning("FAISS index is empty.")
             return Response(
@@ -119,8 +117,9 @@ class FindMatchesAPIView(APIView):
 
         logger.info("Encoding job description and searching FAISS index.")
         q_vec = MODEL.encode([job_desc]).astype('float32')
-        D, I = INDEX.search(q_vec, k=5)
+        D, I = INDEX.search(q_vec, k=10)
 
+        # Load resume ID mapping
         try:
             id_list = np.load(ID_PATH, allow_pickle=True).tolist()
             logger.info("Resume ID mapping loaded.")
