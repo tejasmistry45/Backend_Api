@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import json
 
 load_dotenv()
+# print("API Key:", os.getenv("TOGATHER_API_KEY"))
 
 # Initialize the Together AI LLM
 llm = Together(
@@ -14,30 +15,42 @@ llm = Together(
     # model= "mistralai/Mistral-7B-Instruct-v0.1",
     temperature=0,
     max_tokens=512,
-    together_api_key=os.getenv("TOGETHER_API_KEY"),
+    together_api_key=os.getenv("TOGATHER_API_KEY"),
 )
 
-# Prompt Template
 template = """
-You are an expert resume analyzer. Extract and return the following details from the resume text:
+You are an expert resume analyzer trained to extract structured information from unstructured resume text.
 
-1. Person Name (if available)
-2. Years of Experience (if mentioned in the resume)
-3. Key Skills (comma separated)
-4. Technologies / Tools mentioned in the resume (comma separated)
-5. Estimated Experience Level (Junior, Mid, or Senior)
+Analyze the resume text below and extract the following details as accurately as possible:
 
-Resume:
-"{resume_text}"
+1. **Full Name** of the candidate (based on patterns like headers, email signatures, etc.)
+2. **Total Years of Professional Experience** (You may estimate based on work history, graduation year, and job descriptions if not explicitly mentioned.)
+3. **Key Skills** (Extract relevant job-related skills such as Project Management, Data Analysis, Cloud Computing, etc. — comma separated)
+4. **Technologies and Tools** (List technologies, frameworks, programming languages, libraries, cloud platforms, software, or tools mentioned — comma separated)
+5. **Estimated Experience Level** — Choose **Junior** (0–2 years), **Mid** (2–5 years), or **Senior** (5+ years). Make your best estimate based on job history and roles/responsibilities.
 
-Please provide the information in a structured format in the following way:
+Example output:
+Name: John Doe  
+Years of Experience: 4  
+Key Skills: Data Analysis, Machine Learning, Project Management  
+Technologies / Tools: Python, SQL, TensorFlow, Excel, Git  
+Estimated Experience Level: Mid
 
-Name: [Name or Not Available]
-Years of Experience: [Years or Not Available]
-Key Skills: [Skills or Not Available]
-Technologies / Tools: [Tools or Not Available]
-Estimated Experience Level: [Junior/Mid/Senior or Not Available]
+Now extract the same details from the following resume text:
+
+---
+{resume_text}
+---
+
+Please provide the results in the following format:
+
+Name:  
+Years of Experience:  
+Key Skills:  
+Technologies / Tools:  
+Estimated Experience Level:  
 """
+
 
 prompt = PromptTemplate(
     input_variables=["resume_text"],
@@ -85,49 +98,3 @@ def extract_resume_info(resume_text):
         ]
 
         return summary
-
-
-# def extract_jd_info(job_description):
-#     prompt = f"""
-#         You are an intelligent AI assistant. Extract the following fields from the provided Job Description text.
-#         Respond ONLY in the EXACT format given below. No extra text, explanations, or bullet points.
-
-#         Format:
-#         Job Title: ...
-#         Location: ...
-#         Years of Experience: ...
-#         Estimated Experience Level: ...
-#         Skills: ...
-#         Required Qualifications: ...
-
-#         Job Description:
-#         \"\"\"
-#         {job_description}
-#         \"\"\"
-#     """
-
-#     response = ollama.chat(
-#         model="llama2",
-#         messages=[{"role": "user", "content": prompt}]
-#     )
-
-#     content = response.get('message', {}).get('content', '').strip()
-
-#     # Now, let's parse the content and split it by the fields
-#     cleaned_sections = {}
-
-#     # Split content by lines and match to sections
-#     lines = content.split('\n')
-    
-#     # Ensure you handle each expected field
-#     if len(lines) >= 5:
-#         cleaned_sections["Job Title"] = lines[0].strip()
-#         cleaned_sections["Location"] = lines[1].strip()
-#         cleaned_sections["Years of Experience"] = lines[2].strip()
-#         cleaned_sections["Estimated Experience Level"] = lines[3].strip()
-#         cleaned_sections["Skills"] = lines[4].strip()
-        
-#         # Optionally, join all remaining lines as required qualifications if any
-#         cleaned_sections["Required Qualifications"] = "\n".join(lines[5:]).strip()
-
-#     return cleaned_sections

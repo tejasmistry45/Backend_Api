@@ -13,7 +13,7 @@ async function extractText() {
   try {
     const markdown = await ocr({
       filePath: imagePath,
-      apiKey: process.env.TOGETHER_API_KEY,
+      apiKey: process.env.TOGATHER_API_KEY,
     });
     console.log(markdown);
   } catch (error) {
