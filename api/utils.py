@@ -3,10 +3,11 @@ import uuid
 import fitz 
 import subprocess
 from docx2pdf import convert as docx_to_pdf
-import logging
+from .logger_function import logger_function
 import re
 
-logger = logging.getLogger(__name__)
+
+filename=os.path.basename(__file__)[:-3]
 
 def convert_docx_to_pdf(docx_path):
     pdf_path = docx_path.replace('.docx', '.pdf')
@@ -40,7 +41,7 @@ def run_llamaocr_on_image(image_path):
             text=True
         )
         if result.returncode != 0:
-            logger.error(f"OCR failed: {result.stderr}")
+            logger_function.error(f"OCR failed: {result.stderr}")
             raise Exception(result.stderr)
         return result.stdout.strip()
     except Exception as e:

@@ -3,6 +3,10 @@ from langchain_together import Together
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 import json
+from .logger_function import logger_function
+
+
+filename=os.path.basename(__file__)[:-3]
 
 load_dotenv()
 # print("API Key:", os.getenv("TOGATHER_API_KEY"))

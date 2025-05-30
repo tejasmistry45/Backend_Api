@@ -12,10 +12,10 @@ from .utils import clean_ocr_text, convert_docx_to_pdf, convert_pdf_to_images, r
 from .embeddings_utils import ID_PATH, add_resume_to_index, MODEL, INDEX
 import numpy as np
 import pyodbc
+from .logger_function import logger_function
 
 
-import logging
-logger = logging.getLogger(__name__)
+filename=os.path.basename(__file__)[:-3]
 
 class ProcessResumePathAPIView(APIView):
     def post(self, request):
@@ -32,20 +32,20 @@ class ProcessResumePathAPIView(APIView):
         try:
             # Convert DOCX to PDF if needed
             if full_path.lower().endswith('.docx'):
-                logger.info("Converting DOCX to PDF")
+                logger_function.info(filename,"Converting DOCX to PDF",1)
                 full_path = convert_docx_to_pdf(full_path)
 
             if not full_path.lower().endswith('.pdf'):
                 return Response({'error': 'Only PDF or DOCX files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Convert PDF to images
-            logger.info("Converting PDF pages to images")
+            logger_function(filename,"Converting PDF pages to images",1)
             image_paths = convert_pdf_to_images(full_path)
 
             # Run OCR on each image and gather text
             ocr_texts = []
             for image_path in image_paths:
-                logger.info(f"Running OCR on image: {image_path}")
+                logger_function(filename,f"Running OCR on image: {image_path}",1)
                 text = run_llamaocr_on_image(image_path)
                 ocr_texts.append(text)
 
@@ -53,9 +53,9 @@ class ProcessResumePathAPIView(APIView):
             for image_path in image_paths:
                 try:
                     os.remove(image_path)
-                    logger.info(f"Deleted temporary image: {image_path}")
+                    logger_function(filename,f"Deleted temporary image: {image_path}",1)
                 except Exception as e:
-                    logger.warning(f"Failed to delete image {image_path}: {e}")
+                    logger_function(filename,f"Failed to delete image {image_path}: {e}",1)
 
             raw_text = "\n\n".join(ocr_texts)
             full_text = clean_ocr_text(raw_text)
@@ -73,13 +73,13 @@ class ProcessResumePathAPIView(APIView):
             return Response({'message': 'Processed successfully', 'resume_id': resume_id}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            logger.error(f"Processing failed: {e}")
+            logger_function(filename,f"Processing failed: {e}",1)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class FindMatchesAPIView(APIView):
     def post(self, request):
-        logger.info("Received request to find resume matches.")
+        logger_function(filename,"Received request to find resume matches.",1)
         data = request.data
 
         # Extract structured fields
@@ -91,7 +91,7 @@ class FindMatchesAPIView(APIView):
 
         # Validate required fields
         if not all([job_title, location, years_exp]):
-            logger.warning("Insufficient structured data provided.")
+            logger_function(filename,"Insufficient structured data provided.",1)
             return Response(
                 {'error': 'Please provide all of "job_title", "location", and "years_exp".'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -105,26 +105,29 @@ class FindMatchesAPIView(APIView):
             f"Skills: {skills}; "
             f"Qualifications: {qualifications}"
         )
-        logger.info("Constructed job description from structured fields.")
+        logger_function(filename,"Constructed job description from structured fields.",1)
 
         # Check if FAISS index is available
         if INDEX.ntotal == 0:
-            logger.warning("FAISS index is empty.")
+            logger_function(filename,"FAISS index is empty.",1)
             return Response(
                 {'error': 'FAISS index is empty. Please upload resumes first.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        logger.info("Encoding job description and searching FAISS index.")
-        q_vec = MODEL.encode([job_desc]).astype('float32')
-        D, I = INDEX.search(q_vec, k=10)
+        logger_function(filename,"Encoding job description and searching FAISS index.",1)
+        q_vec = MODEL.encode([job_desc])
+        q_vec = q_vec / np.linalg.norm(q_vec, axis=1, keepdims=True)
+
+        # Search FAISS with cosine similarity (inner product)
+        scores, indices = INDEX.search(q_vec.astype('float32'), k=10)
 
         # Load resume ID mapping
         try:
             id_list = np.load(ID_PATH, allow_pickle=True).tolist()
-            logger.info("Resume ID mapping loaded.")
-        except FileNotFoundError:
-            logger.error(f"ID mapping file not found at {ID_PATH}.")
+            logger_function(filename,"Resume ID mapping loaded.",1)
+        except  :
+            logger_function(filename,f"ID mapping file not found at {ID_PATH}.",1)
             return Response(
                 {'error': f'ID mapping file not found at {ID_PATH}.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -132,28 +135,26 @@ class FindMatchesAPIView(APIView):
 
         results = []
         with connections['external_db'].cursor() as cursor:
-            for distance, index in zip(D[0], I[0]):
-                index = int(index)
-                if index == -1 or index >= len(id_list):
-                    logger.debug(f"Skipping invalid index: {index}")
+            for score, idx in zip(scores[0], indices[0]):
+                if idx == -1 or idx >= len(id_list):
                     continue
 
-                resume_id = id_list[index]
+                resume_id = id_list[idx]
                 cursor.execute("SELECT 1 FROM JobInquiry WHERE id = %s", [resume_id])
                 if cursor.fetchone():
                     results.append({
                         'resume_id': resume_id,
-                        'score': float(distance)
+                        'score': round(float(score),4 )
                     })
-                    logger.debug(f"Match found: Resume ID {resume_id} with score {float(distance)}")
+                    logger_function(filename,f"Match found: Resume ID {resume_id} with score {float(score)}",1)
 
-        logger.info(f"Total matches found: {len(results)}")
+        logger_function(filename,f"Total matches found: {len(results)}",1)
         return Response({'matches': results})
 
 
 class ResumeKeyPointsAPIView(APIView):
     def get(self, request, resume_id):
-        logger.info(f"Received request to extract key points for resume ID: {resume_id}")
+        logger_function(filename,f"Received request to extract key points for resume ID: {resume_id}",1)
         try:
             conn = pyodbc.connect(
                 'DRIVER={ODBC Driver 17 for SQL Server};'
@@ -167,24 +168,21 @@ class ResumeKeyPointsAPIView(APIView):
             row = cursor.fetchone()
 
             if not row:
-                logger.warning(f"No resume found for ID: {resume_id}")
+                logger_function(filename,f"No resume found for ID: {resume_id}",1)
                 return Response({'error': 'Resume not found.'}, status=status.HTTP_404_NOT_FOUND)
 
             resume_text = row.resume_text
-            logger.info("Extracting insights from resume text.")
+            logger_function(filename,"Extracting insights from resume text.",1)
             insights = extract_resume_info(resume_text)
 
             return Response(insights, status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.error(f"Error extracting resume key points: {str(e)}")
+            logger_function(filename,f"Error extracting resume key points: {str(e)}",1)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         finally:
             cursor.close()
             conn.close()
-            logger.info("Database connection closed.")
+            logger_function(filename, "Database connection closed.",1)
 
-
-
-# 

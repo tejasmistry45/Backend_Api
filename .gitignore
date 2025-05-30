@@ -3,6 +3,8 @@ __pycache__/
 migrations/
 media/
 node_modules/
+logs/
+
 
 embedings/
 .env
