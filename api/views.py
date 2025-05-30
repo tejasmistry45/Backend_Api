@@ -61,7 +61,7 @@ class ProcessResumePathAPIView(APIView):
             full_text = clean_ocr_text(raw_text)
 
             # Save to DB
-            with connections['external_db'].cursor() as cursor:
+            with connections["default"].cursor() as cursor:
                 cursor.execute(
                     "UPDATE JobInquiry SET resume_text = %s WHERE Id = %s",
                     [full_text, resume_id]
@@ -134,7 +134,8 @@ class FindMatchesAPIView(APIView):
             )
 
         results = []
-        with connections['external_db'].cursor() as cursor:
+        with connections['default'].cursor() as cursor:
+        # with connections.cursor() as cursor:
             for score, idx in zip(scores[0], indices[0]):
                 if idx == -1 or idx >= len(id_list):
                     continue

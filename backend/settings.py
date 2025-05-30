@@ -83,23 +83,23 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'Resume',
+        'NAME': 'SkyHR',
         'HOST': 'localhost',
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
             'trusted_connection': 'yes',
         },
-    },
-    'external_db': {
-        'ENGINE': 'mssql',
-        'NAME': 'SkyHR',
-        'HOST': 'localhost',
-        'PORT': '',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'extra_params': 'TrustServerCertificate=yes',
-        },
     }
+    # 'external_db': {
+    #     'ENGINE': 'mssql',
+    #     'NAME': 'SkyHR',
+    #     'HOST': 'localhost',
+    #     'PORT': '',
+    #     'OPTIONS': {
+    #         'driver': 'ODBC Driver 17 for SQL Server',
+    #         'extra_params': 'TrustServerCertificate=yes',
+    #     },
+    # }
 }
 
 
